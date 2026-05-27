@@ -1,4 +1,4 @@
-# DocuMind 🧠
+# DocuMind 
 
 DocuMind is a modern, full-stack Retrieval-Augmented Generation (RAG) application that allows users to upload PDF documents, intelligently chunk and index their contents into a vector database, and perform interactive Q&A with an AI assistant using Google's Gemini LLM. 
 
