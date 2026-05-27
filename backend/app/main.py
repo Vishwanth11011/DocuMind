@@ -55,7 +55,7 @@ app = FastAPI(
 
 # Include 127.0.0.1 — Vite may open as localhost or 127.0.0.1; CORS origins must match exactly.
 CORS_ORIGINS = [
-    "https://your-app.vercel.app",
+    "https://documind-blond.vercel.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
