@@ -88,6 +88,10 @@ def load_embedder() -> None:
 
 def get_vector_size() -> int:
     """Return the embedding dimension for the configured model."""
+    from app.config import get_settings
+    settings = get_settings()
+    if settings.embedding_model == "all-MiniLM-L6-v2":
+        return 384
     return EmbedderService.get_instance().vector_size
 
 

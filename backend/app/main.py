@@ -19,7 +19,10 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     logger.info("Connecting to Qdrant at %s", settings.qdrant_url)
     try:
-        load_embedder()
+        from app.services.embedder import get_vector_size
+        import asyncio
+        
+        # Initialize vector store quickly (get_vector_size now hardcodes the default size)
         initialize_vector_store(get_vector_size())
         
         from app.config import STRATEGY_COLLECTION_MAP
@@ -29,6 +32,9 @@ async def lifespan(app: FastAPI):
         for strategy, col_name in STRATEGY_COLLECTION_MAP.items():
             if not store.collection_exists(col_name):
                 store.create_collection(col_name, vector_size=vec_size)
+                
+        # Start loading embedder in background so it's ready for first request
+        asyncio.create_task(asyncio.to_thread(load_embedder))
     except Exception as exc:
         logger.error(
             "Startup failed while loading models or Qdrant. "
