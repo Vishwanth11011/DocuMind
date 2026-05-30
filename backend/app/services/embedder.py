@@ -1,4 +1,5 @@
 import logging
+import threading
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -18,6 +19,7 @@ class EmbedderService:
     """Singleton wrapper around SentenceTransformer for document embeddings."""
 
     _instance: "EmbedderService | None" = None
+    _lock = threading.Lock()
 
     def __init__(self) -> None:
         settings = get_settings()
@@ -47,12 +49,16 @@ class EmbedderService:
         if self._model is not None:
             return
 
-        from sentence_transformers import SentenceTransformer
+        with self._lock:
+            if self._model is not None:
+                return
 
-        logger.info("Loading embedding model: %s", self._model_name)
-        self._model = SentenceTransformer(self._model_name)
-        self._vector_size = int(self._model.get_sentence_embedding_dimension())
-        logger.info("Embedding model ready (dim=%s)", self._vector_size)
+            from sentence_transformers import SentenceTransformer
+
+            logger.info("Loading embedding model: %s", self._model_name)
+            self._model = SentenceTransformer(self._model_name)
+            self._vector_size = int(self._model.get_sentence_embedding_dimension())
+            logger.info("Embedding model ready (dim=%s)", self._vector_size)
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         """

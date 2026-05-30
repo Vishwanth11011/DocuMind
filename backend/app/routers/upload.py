@@ -58,21 +58,26 @@ async def upload_document(
         start = time.perf_counter()
         doc_id = str(uuid4())
 
+        import asyncio
+
         buffer = BytesIO(file_bytes)
-        parsed = parse_pdf(buffer, file.filename)
+        parsed = await asyncio.to_thread(parse_pdf, buffer, file.filename)
 
         from app.config import STRATEGY_COLLECTION_MAP
         results = {}
         for strategy in ["fixed", "sentence", "semantic"]:
-            chunks_res = chunk(parsed["text"], strategy)
+            chunks_res = await asyncio.to_thread(chunk, parsed["text"], strategy)
             if not chunks_res:
                 results[strategy] = 0
                 continue
-            vectors = embed([item["text"] for item in chunks_res])
+                
+            texts_to_embed = [item["text"] for item in chunks_res]
+            vectors = await asyncio.to_thread(embed, texts_to_embed)
             col = STRATEGY_COLLECTION_MAP[strategy]
             
             # Ingest into the strategy-specific collection for Compare Mode
-            get_vector_store().upsert_chunks(
+            await asyncio.to_thread(
+                get_vector_store().upsert_chunks,
                 doc_id=doc_id,
                 filename=parsed["filename"],
                 user_id=user_id,
@@ -84,7 +89,8 @@ async def upload_document(
             
             # Also ingest the user's selected primary strategy into the default collection for Normal Mode
             if strategy == chunking_strategy:
-                get_vector_store().upsert_chunks(
+                await asyncio.to_thread(
+                    get_vector_store().upsert_chunks,
                     doc_id=doc_id,
                     filename=parsed["filename"],
                     user_id=user_id,
